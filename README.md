@@ -1,3 +1,3 @@
-# go-repository-template
+# go_common_module
 
-go関連のrepositoryを作成する際にtemplateとして使用
+go言語開発用の共通module
