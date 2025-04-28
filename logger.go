@@ -21,6 +21,7 @@ type Logger interface {
 	Info(msg string, fields ...zap.Field)
 	Warn(msg string, fields ...zap.Field)
 	Error(msg string, fields ...zap.Field)
+	Errorw(msg string, err error, fields ...zap.Field)
 }
 
 type zapLogger struct {
@@ -38,6 +39,10 @@ func (z *zapLogger) Warn(msg string, fields ...zap.Field) {
 }
 func (z *zapLogger) Error(msg string, fields ...zap.Field) {
 	z.l.Error(msg, fields...)
+}
+func (z *zapLogger) Errorw(msg string, err error, fields ...zap.Field) {
+	allFields := append(fields, zap.Error(err))
+	z.l.Error(msg, allFields...)
 }
 
 // NewLogger creates a new Logger based on LoggerConfig
