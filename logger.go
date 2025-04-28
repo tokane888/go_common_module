@@ -10,10 +10,10 @@ import (
 )
 
 type LoggerConfig struct {
-	Level      string
-	Format     string
-	AppName    string
-	AppVersion string
+	Level      string // debug, info, warn, prod
+	Format     string // local(見やすさ重視), cloud(CloudWatch等で解析可能であることを重視)
+	AppName    string // アプリ名(cloudでのみログ出力)
+	AppVersion string // アプリのバージョン(cloudでのみログ出力)
 }
 
 type Logger interface {
