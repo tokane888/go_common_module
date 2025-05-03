@@ -10,43 +10,13 @@ import (
 )
 
 type LoggerConfig struct {
-	Level      string // debug, info, warn, prod
+	Level      string // debug, info, warn, error
 	Format     string // local(見やすさ重視), cloud(CloudWatch等で解析可能であることを重視)
 	AppName    string // アプリ名(cloudでのみログ出力)
 	AppVersion string // アプリのバージョン(cloudでのみログ出力)
 }
 
-type Logger interface {
-	Debug(msg string, fields ...zap.Field)
-	Info(msg string, fields ...zap.Field)
-	Warn(msg string, fields ...zap.Field)
-	Error(msg string, fields ...zap.Field)
-	Errorw(msg string, err error, fields ...zap.Field)
-}
-
-type zapLogger struct {
-	l *zap.Logger
-}
-
-func (z *zapLogger) Debug(msg string, fields ...zap.Field) {
-	z.l.Debug(msg, fields...)
-}
-func (z *zapLogger) Info(msg string, fields ...zap.Field) {
-	z.l.Info(msg, fields...)
-}
-func (z *zapLogger) Warn(msg string, fields ...zap.Field) {
-	z.l.Warn(msg, fields...)
-}
-func (z *zapLogger) Error(msg string, fields ...zap.Field) {
-	z.l.Error(msg, fields...)
-}
-func (z *zapLogger) Errorw(msg string, err error, fields ...zap.Field) {
-	allFields := append(fields, zap.Error(err))
-	z.l.Error(msg, allFields...)
-}
-
-// NewLogger creates a new Logger based on LoggerConfig
-func NewLogger(cfg LoggerConfig) (Logger, error) {
+func NewLogger(cfg LoggerConfig) (*zap.Logger, error) {
 	var zapCfg zap.Config
 	switch cfg.Format {
 	case "local":
@@ -70,32 +40,28 @@ func NewLogger(cfg LoggerConfig) (Logger, error) {
 	}
 
 	// ログレベル設定
-	level := cfg.Level
 	parsedLevel := zapcore.InfoLevel
-	if err := parsedLevel.UnmarshalText([]byte(level)); err != nil {
-		fmt.Fprintf(os.Stderr, "invalid LOG_LEVEL %q, fallback to 'info'\n", level)
-		parsedLevel = zapcore.InfoLevel
+	if err := parsedLevel.UnmarshalText([]byte(cfg.Level)); err != nil {
+		fmt.Fprintf(os.Stderr, "invalid LOG_LEVEL %q, fallback to 'info'\n", cfg.Level)
 	}
 	zapCfg.Level = zap.NewAtomicLevelAt(parsedLevel)
 
 	// error時のみStackTrace出力するよう設定
 	zapCfg.DisableStacktrace = true
-	baseLogger, err := zapCfg.Build(
+	logger, err := zapCfg.Build(
 		zap.AddStacktrace(zapcore.ErrorLevel),
 	)
 	if err != nil {
-		wrappedErr := fmt.Errorf("failed to build logger: %w", err)
-		fmt.Fprintln(os.Stderr, wrappedErr)
-		return nil, err
+		return nil, fmt.Errorf("failed to build logger: %w", err)
 	}
 
 	// cloud向けはフィールド追加
 	if cfg.Format == "cloud" {
-		baseLogger = baseLogger.With(
+		logger = logger.With(
 			zap.String("app", cfg.AppName),
 			zap.String("version", cfg.AppVersion),
 		)
 	}
 
-	return &zapLogger{l: baseLogger}, nil
+	return logger, nil
 }
