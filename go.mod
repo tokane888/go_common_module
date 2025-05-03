@@ -1,4 +1,4 @@
-module github.com/tokane888/go_common_module
+module github.com/tokane888/go_common_module/v2
 
 go 1.23.8
 
