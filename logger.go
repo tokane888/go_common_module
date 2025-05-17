@@ -10,11 +10,10 @@ import (
 )
 
 type LoggerConfig struct {
-	Level      string         // debug, info, warn, error
-	Format     string         // local(見やすさ重視), cloud(CloudWatch等で解析可能であることを重視)
-	AppName    string         // アプリ名(cloudでのみログ出力)
-	AppVersion string         // アプリのバージョン(cloudでのみログ出力)
-	Location   *time.Location // ログ出力時のタイムゾーン(nilならUTC)
+	Level      string // debug, info, warn, error
+	Format     string // local(見やすさ重視), cloud(CloudWatch等で解析可能であることを重視)
+	AppName    string // アプリ名(cloudでのみログ出力)
+	AppVersion string // アプリのバージョン(cloudでのみログ出力)
 }
 
 func NewLogger(cfg LoggerConfig) (*zap.Logger, error) {
@@ -22,14 +21,11 @@ func NewLogger(cfg LoggerConfig) (*zap.Logger, error) {
 	switch cfg.Format {
 	case "local":
 		// local環境では読みやすさ重視
-		// (非構造化ログ、JST、ミリ秒精度)
+		// (非構造化ログ、JST固定、ミリ秒精度)
 		zapCfg = zap.NewDevelopmentConfig()
 		zapCfg.EncoderConfig.EncodeTime = func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
-			loc := cfg.Location
-			if loc == nil {
-				loc = time.UTC
-			}
-			enc.AppendString(t.In(loc).Format("2006-01-02T15:04:05.000Z07:00"))
+			jst := t.In(time.FixedZone("Asia/Tokyo", 9*60*60))
+			enc.AppendString(jst.Format("2006-01-02T15:04:05.000Z07:00"))
 		}
 	case "cloud":
 		// cloud環境ではcloud watch等で読まれる前提で解析重視
