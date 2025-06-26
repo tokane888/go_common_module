@@ -12,6 +12,7 @@ import (
 type LoggerConfig struct {
 	Level      string // debug, info, warn, error
 	Format     string // local(見やすさ重視), cloud(CloudWatch等で解析可能であることを重視)
+	Env        string // 環境名(cloudでのみログ出力)
 	AppName    string // アプリ名(cloudでのみログ出力)
 	AppVersion string // アプリのバージョン(cloudでのみログ出力)
 }
@@ -59,6 +60,7 @@ func NewLogger(cfg LoggerConfig) (*zap.Logger, error) {
 	if cfg.Format == "cloud" {
 		logger = logger.With(
 			zap.String("app", cfg.AppName),
+			zap.String("env", cfg.Env),
 			zap.String("version", cfg.AppVersion),
 		)
 	}
