@@ -1,6 +1,6 @@
 module github.com/tokane888/go_common_module/v2
 
-go 1.23.8
+go 1.24
 
 require go.uber.org/zap v1.27.0
 
